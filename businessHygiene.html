@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"> </script>
+
+</head>
+<style>
+html{
+background:#f9f9f9;
+}
+
+h1 {
+    border-bottom: 3px solid #cc9900;
+    color: #996600;
+    font-size: 30px;
+}
+table, th , td  {
+    border: 1px solid grey;
+    border-collapse: collapse;
+    padding: 5px;
+	margin-left: auto;
+    margin-right: auto;
+}
+table tr:nth-child(odd) {
+    background-color: #f1f1f1;
+}
+table tr:nth-child(even) {
+    background-color: #ffffff;
+}
+body{
+	width:60%;
+	margin-left:19%;
+	padding:20px;
+	background:#fff;
+	display:inline;
+	float:left;
+	border:solid 1px #8c8c8c;
+	box-shadow: 4px 4px 2px #888888;
+}
+
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+	margin-left: 50%;
+    padding: 0;
+    border: 1px solid #888;
+    width: 30%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+/* Add Animation */
+@-webkit-keyframes animatetop {
+    from {right:-300px; opacity:0} 
+    to {right:0; opacity:1}
+}
+
+@keyframes animatetop {
+    from {right:-300px; opacity:0}
+    to {right:0; opacity:1}
+}
+
+/* The Close Button */
+#close {
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+#close:hover,
+#close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-header {
+    padding: 2px 16px;
+    background-color: #ffeaaa;
+    color: #996600;
+}
+
+.modal-body {padding: 2px 16px; font-weight:bold;}
+
+.modal-footer {
+    padding: 2px 16px;
+    background-color: #ffeaaa;
+    color: #996600;
+}
+</style>
+<body>
+
+	<div>
+		<h1> Food Hygiene </h1>
+		<p> This is a website displaying information based restaurants, provided by The Food Standards Agency </p>
+		<p> The website uses server-side script to access data and organise it into table.</p>
+	</div>
+
+	<div id = "main">
+		
+		<h2>Hygiene Table</h2>
+
+		<table id = "hygieneTable">
+		<div id = "pageButtons"></div><br>
+			<tr>
+				<th>Business</th>
+				<th>Address</th>		
+				<th>Hygiene</th>
+				<th>Date</th>
+				<th>Rating</th>
+			 </tr>
+		</table>
+		
+		<div id="myModal" class="modal">
+			<div class="modal-content">
+				<div class="modal-header">
+					<span id="close">&times</span>
+					<h2 id="modalHeader"></h2>
+				</div>
+				
+				<div class="modal-body">
+					<p id="modalRating"></p>
+				</div>
+				
+				<div class="modal-footer"></div>
+			</div>
+		</div>
+
+		<br>
+		<form id = "businessSearch">
+			<label> Search for business</label><br>
+			<input type = "text" id = "string" placeholder = "e.g. ASK Italian" required></input>
+			<button type="submit">Search</button>
+		</form>
+	</div>
+
+	<script>
+	
+//search bar which find a given word's concatenation
+$(document).ready(function(){
+	$('#businessSearch').on('submit', function(submitted){
+		submitted.preventDefault();//prevents the table from loading the default display over each search
+		var inputVal = $('#string').val();
+		var url = "https://www.cs.kent.ac.uk/people/staff/lb514/hygiene/hygiene.php?op=searchname&name=" + inputVal;
+		ajaxIntoTable(url);//display in the table and create + attach an click event to the button
+	});
+});	
+
+//creating pagers and attaching an ajax request to each button
+$(document).ready(function(){	
+	$.ajax({
+		url: "https://www.cs.kent.ac.uk/people/staff/lb514/hygiene/hygiene.php?op=pages",
+		type: "get",
+		dataType: "json",
+		success: function(noOfPages){
+
+			for(i = 1; i <= noOfPages.pages; i++){
+				$button = $('<button/>',{
+					text: i, 
+					id: '#button' + i, 
+					click: function(){
+						var url = "https://www.cs.kent.ac.uk/people/staff/lb514/hygiene/hygiene.php?op=retrieve&page=" + $(this).text();
+						ajaxIntoTable(url);
+					}
+				});
+				$("#pageButtons").append($button);	
+			}
+		}	
+	});
+});
+
+//load default 10 businesses into the table
+$(document).ready(function(){	
+	var url = "https://www.cs.kent.ac.uk/people/staff/lb514/hygiene/hygiene.php?op=demo";
+	ajaxIntoTable(url);
+});
+
+//creates a table and adds a click event listener to every button
+function ajaxIntoTable(urlString){
+	$.ajax({
+		url: urlString,
+		type: "get",
+		dataType: "json",
+		success: function(data){
+		
+			$("#hygieneTable").html("<th>Business</th><th>Address</th><th>Hygiene</th><th>Date</th><th>Rating</th>"); //empties the table and gives a head titles		
+			$.each(data, function(i, elem){
+				var row = '<tr><td>' + elem.business + '</td><td>' + elem.address + '</td><td>' + elem.rating + '</td><td>' + elem.date + '</td><td>';
+				$ratingButt = "<button class=\"rating\">Get Rating</button>";
+				row += $ratingButt + '</td></tr>';
+				$("#hygieneTable").append(row);
+				$('#hygieneTable').children().last().on('click', ".rating", function() {
+					businessPostcode = elem.postcode;
+					businessName = elem.business;
+					buttClickFunction(businessName, businessPostcode);
+				});	
+			});
+		}	
+	});
+}
+
+function buttClickFunction(businessName, businessPostCode){
+	url = "https://www.cs.kent.ac.uk/people/staff/lb514/hygiene/rating.php?name=" + businessName;
+	$.ajax({
+		url: url,
+		type: "get",
+		dataType: "json",
+		success: function(ratings){
+		
+			if(ratings.length == 1){ //if there 1 business name matched with the google db
+				$("#modalHeader").html(businessName);
+				  if ($.isEmptyObject(ratings[0].rating))
+					$("#modalRating").html("This business doesn't have a rating");
+				  else 
+					$("#modalRating").html("The rating is: " + ratings[0].rating);		
+			
+			}else if(ratings.length == 0){
+					$("#modalHeader").html(businessName);
+					$("#modalRating").html("This business doesn't have a rating");
+					
+				}else if(ratings.length > 1){ //if there are few business names matched, check against post code and find the correct one
+					for(var i = 0; i < ratings.length; i++){
+						var addressString = ratings[i].address;
+						if(addressString.indexOf(businessPostCode) > 0){//if google bussiness address matches the given postcode
+							$("#modalHeader").html(businessName);
+							$("#modalRating").html("The rating is: " + ratings[i].rating);
+						}
+					}
+				}				
+			$("#myModal").css("display", "block");	//display the pop out
+		}
+	});
+}
+
+
+	 $("#myModal").click(function(event){
+		$("#myModal").css("display", "none");
+	 });
+
+	$("#close").click(function() {
+		$("#myModal").css("display", "none");
+	});
+
+	</script>
+</body>
+</html>
